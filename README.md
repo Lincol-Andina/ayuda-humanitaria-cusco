@@ -167,3 +167,8 @@ pocketbase/                 # Solo para migrar; se puede borrar tras la migraci�
 - **La numeración de códigos no avanza** → verifica que existe la función `next_code`
   (incluida en `schema.sql`).
 - **El reset no borra las fotos** → comprueba que el bucket `evidencias` existe y es público.
+
+## URL de producci�n
+
+[ayuda-humanitaria-cusco.vercel.app](https://ayuda-humanitaria-cusco.vercel.app)
+Desplegado en Vercel (Next.js + Supabase).
