@@ -18,13 +18,16 @@ import { cn } from "@/lib/utils";
 import { useRole } from "./RoleContext";
 import { useHealth } from "@/hooks/useHealth";
 
-const LINKS = [
+const LINKS_PUBLIC = [
   { href: "/", label: "Transparencia", icon: LayoutDashboard },
+  { href: "/admin", label: "Administración", icon: Settings },
+] as const;
+
+const LINKS_OPERACION = [
   { href: "/inspeccion", label: "Inspección", icon: ClipboardCheck },
   { href: "/inventario", label: "Inventario", icon: PackageSearch },
   { href: "/despacho", label: "Despacho", icon: Truck },
-  { href: "/admin", label: "Administración", icon: Settings },
-];
+] as const;
 
 export function Navbar() {
   const pathname = usePathname();
@@ -50,7 +53,7 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
-          {LINKS.map((link) => {
+          {LINKS_PUBLIC.map((link) => {
             const active =
               link.href === "/"
                 ? pathname === "/"
@@ -72,6 +75,29 @@ export function Navbar() {
               </Link>
             );
           })}
+          {celula !== "publico" && (
+            <div className="ml-1 flex items-center gap-1 rounded-lg bg-slate-50 p-1">
+              {LINKS_OPERACION.map((link) => {
+                const active = pathname.startsWith(link.href);
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-white text-brand-700 shadow-sm ring-1 ring-slate-200"
+                        : "text-slate-600 hover:bg-white/70 hover:text-slate-900",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -126,7 +152,7 @@ export function Navbar() {
       {open ? (
         <div className="border-t border-slate-100 bg-white px-4 py-3 lg:hidden">
           <nav className="flex flex-col gap-1">
-            {LINKS.map((link) => {
+            {LINKS_PUBLIC.map((link) => {
               const active =
                 link.href === "/"
                   ? pathname === "/"
@@ -149,6 +175,31 @@ export function Navbar() {
                 </Link>
               );
             })}
+            {celula !== "publico" && (
+              <>
+                <div className="mt-2 border-t border-slate-100 pt-2" />
+                {LINKS_OPERACION.map((link) => {
+                  const active = pathname.startsWith(link.href);
+                  const Icon = link.icon;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className={cn(
+                        "inline-flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium",
+                        active
+                          ? "bg-white text-brand-700 shadow-sm ring-1 ring-slate-200"
+                          : "text-slate-600 hover:bg-slate-100",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </>
+            )}
           </nav>
           <div className="mt-3 border-t border-slate-100 pt-3">
             <label className="mb-1 block text-[11px] font-medium text-slate-500">
