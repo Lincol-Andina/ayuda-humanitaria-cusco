@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdminDb, removeFoto, errorMessage } from "@/lib/db";
 import { ESTADOS } from "@/lib/constants";
+import { requireRole } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +11,9 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
+    const auth = await requireRole(request, ["inspeccion", "inventario", "despacho", "admin"]);
+    if (auth instanceof NextResponse) return auth;
+
     const { id } = await context.params;
     const body = (await request.json()) as { estado?: string };
 
@@ -32,10 +36,13 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
   try {
+    const auth = await requireRole(request, ["admin"]);
+    if (auth instanceof NextResponse) return auth;
+
     const { id } = await context.params;
     const db = getAdminDb();
     const { data } = await db

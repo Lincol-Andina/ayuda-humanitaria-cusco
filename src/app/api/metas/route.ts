@@ -1,13 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdminDb, errorMessage } from "@/lib/db";
+import { requireRole } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function validatePin(pin: unknown): boolean {
-  const expected = process.env.ADMIN_PIN ?? "1234";
-  return typeof pin === "string" && pin.trim() === expected;
-}
 
 export async function GET() {
   try {
@@ -25,10 +21,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireRole(request, ["admin"]);
+    if (auth instanceof NextResponse) return auth;
+
     const body = (await request.json()) as Record<string, unknown>;
-    if (!validatePin(body.pin)) {
-      return NextResponse.json({ error: "PIN incorrecto" }, { status: 401 });
-    }
     const db = getAdminDb();
     const { data, error } = await db
       .from("metas")

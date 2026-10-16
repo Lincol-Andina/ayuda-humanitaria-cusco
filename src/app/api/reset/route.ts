@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdminDb, removeFoto, errorMessage } from "@/lib/db";
+import { requireRole } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,11 +14,8 @@ const RESET_TABLES = [
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { pin?: string };
-    const expected = process.env.ADMIN_PIN ?? "1234";
-    if (typeof body.pin !== "string" || body.pin.trim() !== expected) {
-      return NextResponse.json({ error: "PIN incorrecto" }, { status: 401 });
-    }
+    const auth = await requireRole(request, ["admin"]);
+    if (auth instanceof NextResponse) return auth;
 
     const db = getAdminDb();
     const deleted: Record<string, number> = {};

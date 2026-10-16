@@ -1,16 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  KeyRound,
-  Lock,
-  Plus,
-  RotateCcw,
-  Save,
-  Target,
-  Trash2,
-  TriangleAlert,
-} from "lucide-react";
+import { Plus, RotateCcw, Save, Target, Trash2, TriangleAlert } from "lucide-react";
 import { useCollection } from "@/hooks/useCollection";
 import type { Meta } from "@/lib/types";
 import { TIPOS_META } from "@/lib/constants";
@@ -31,15 +22,11 @@ const TIPO_LABEL: Record<string, string> = {
   manual: "Manual",
 };
 
+type Message = { tone: "success" | "error"; text: string };
+
 export default function AdminPage() {
   const metas = useCollection<Meta>("metas", { sort: "created" });
-  const [pin, setPin] = useState("");
-  const [unlocked, setUnlocked] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [checking, setChecking] = useState(false);
-  const [message, setMessage] = useState<
-    { tone: "success" | "error"; text: string } | null
-  >(null);
+  const [message, setMessage] = useState<Message | null>(null);
   const [resetting, setResetting] = useState(false);
 
   const [nueva, setNueva] = useState({
@@ -49,27 +36,6 @@ export default function AdminPage() {
     valor_meta: "",
     valor_actual: "",
   });
-
-  async function handleUnlock() {
-    setChecking(true);
-    setAuthError(null);
-    try {
-      const response = await fetch("/api/admin/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin }),
-      });
-      if (!response.ok) {
-        setAuthError("PIN incorrecto");
-        return;
-      }
-      setUnlocked(true);
-    } catch {
-      setAuthError("No se pudo verificar el PIN");
-    } finally {
-      setChecking(false);
-    }
-  }
 
   async function handleReset() {
     if (
@@ -82,7 +48,7 @@ export default function AdminPage() {
     setResetting(true);
     setMessage(null);
     try {
-      await resetData(pin);
+      await resetData();
       setMessage({ tone: "success", text: "Datos de prueba reiniciados correctamente." });
     } catch (error) {
       setMessage({
@@ -98,7 +64,6 @@ export default function AdminPage() {
     setMessage(null);
     try {
       await createMeta({
-        pin,
         nombre: nueva.nombre.trim() || "Nueva meta",
         unidad: nueva.unidad.trim(),
         tipo: nueva.tipo,
@@ -119,56 +84,6 @@ export default function AdminPage() {
         text: error instanceof Error ? error.message : "Error al agregar meta",
       });
     }
-  }
-
-  if (!unlocked) {
-    return (
-      <div>
-        <PageHeader
-          title="Administración"
-          description="Acceso restringido para tareas de mantenimiento y limpieza de datos."
-        />
-        <Card className="mx-auto max-w-md">
-          <CardBody className="space-y-4">
-            <div className="flex flex-col items-center gap-2 py-2 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-700">
-                <Lock className="h-5 w-5" />
-              </span>
-              <h2 className="text-sm font-semibold text-slate-800">
-                Ingresa el PIN de administración
-              </h2>
-              <p className="text-xs text-slate-500">
-                Configurado por defecto como <code>1234</code> en el archivo
-                .env.local.
-              </p>
-            </div>
-            {authError ? <Alert tone="error">{authError}</Alert> : null}
-            <Field label="PIN" htmlFor="pin">
-              <Input
-                id="pin"
-                type="password"
-                inputMode="numeric"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void handleUnlock();
-                }}
-                placeholder="••••"
-              />
-            </Field>
-            <Button
-              type="button"
-              onClick={handleUnlock}
-              disabled={checking || pin.trim() === ""}
-              icon={<KeyRound className="h-4 w-4" />}
-              className="w-full"
-            >
-              {checking ? "Verificando…" : "Ingresar"}
-            </Button>
-          </CardBody>
-        </Card>
-      </div>
-    );
   }
 
   return (
@@ -229,12 +144,7 @@ export default function AdminPage() {
             ) : (
               <div className="space-y-3">
                 {metas.records.map((meta) => (
-                  <MetaRow
-                    key={meta.id}
-                    meta={meta}
-                    pin={pin}
-                    onMessage={setMessage}
-                  />
+                  <MetaRow key={meta.id} meta={meta} onMessage={setMessage} />
                 ))}
               </div>
             )}
@@ -262,7 +172,7 @@ export default function AdminPage() {
                     placeholder="Ej. kg"
                   />
                 </Field>
-                <Field label="Tipo de cálculo">
+                <Field label="Tipo">
                   <Select
                     value={nueva.tipo}
                     onChange={(e) =>
@@ -271,34 +181,28 @@ export default function AdminPage() {
                   >
                     {TIPOS_META.map((tipo) => (
                       <option key={tipo} value={tipo}>
-                        {TIPO_LABEL[tipo]}
+                        {TIPO_LABEL[tipo] ?? tipo}
                       </option>
                     ))}
                   </Select>
                 </Field>
-                <Field label="Valor objetivo">
+                <Field label="Objetivo">
                   <Input
                     type="number"
                     value={nueva.valor_meta}
                     onChange={(e) =>
-                      setNueva((prev) => ({
-                        ...prev,
-                        valor_meta: e.target.value,
-                      }))
+                      setNueva((prev) => ({ ...prev, valor_meta: e.target.value }))
                     }
                     placeholder="0"
                   />
                 </Field>
                 {nueva.tipo === "manual" ? (
-                  <Field label="Valor actual">
+                  <Field label="Avance actual">
                     <Input
                       type="number"
                       value={nueva.valor_actual}
                       onChange={(e) =>
-                        setNueva((prev) => ({
-                          ...prev,
-                          valor_actual: e.target.value,
-                        }))
+                        setNueva((prev) => ({ ...prev, valor_actual: e.target.value }))
                       }
                       placeholder="0"
                     />
@@ -307,10 +211,9 @@ export default function AdminPage() {
               </div>
               <Button
                 type="button"
-                size="sm"
                 onClick={handleAddMeta}
                 disabled={nueva.nombre.trim() === ""}
-                icon={<Plus className="h-3.5 w-3.5" />}
+                icon={<Plus className="h-4 w-4" />}
                 className="mt-3"
               >
                 Agregar meta
@@ -323,34 +226,25 @@ export default function AdminPage() {
   );
 }
 
-function MetaRow({
-  meta,
-  pin,
-  onMessage,
-}: {
-  meta: Meta;
-  pin: string;
-  onMessage: (value: { tone: "success" | "error"; text: string } | null) => void;
-}) {
+function MetaRow({ meta, onMessage }: { meta: Meta; onMessage: (m: Message | null) => void }) {
   const [nombre, setNombre] = useState(meta.nombre);
   const [valorMeta, setValorMeta] = useState(String(meta.valor_meta));
   const [valorActual, setValorActual] = useState(String(meta.valor_actual));
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const auto = meta.tipo !== "manual";
+  // const automatica = meta.tipo !== "manual";
 
-  async function save() {
+  async function handleSave() {
     setSaving(true);
     onMessage(null);
     try {
       await updateMeta(meta.id, {
-        pin,
-        nombre: nombre.trim(),
+        nombre: nombre.trim() || meta.nombre,
         valor_meta: Number(valorMeta) || 0,
         valor_actual: Number(valorActual) || 0,
       });
-      onMessage({ tone: "success", text: `Meta "${nombre}" actualizada.` });
+      onMessage({ tone: "success", text: "Meta actualizada." });
     } catch (error) {
       onMessage({
         tone: "error",
@@ -361,12 +255,12 @@ function MetaRow({
     }
   }
 
-  async function remove() {
-    if (!window.confirm(`¿Eliminar la meta "${meta.nombre}"?`)) return;
+  async function handleDelete() {
+    if (!window.confirm("¿Eliminar esta meta?")) return;
     setDeleting(true);
     onMessage(null);
     try {
-      await deleteMeta(meta.id, pin);
+      await deleteMeta(meta.id);
       onMessage({ tone: "success", text: "Meta eliminada." });
     } catch (error) {
       onMessage({
@@ -379,65 +273,59 @@ function MetaRow({
   }
 
   return (
-    <div className="grid gap-3 rounded-xl border border-slate-200 p-3 sm:grid-cols-[1fr_1fr_auto]">
-      <div className="space-y-2">
+    <div className="rounded-xl border border-slate-200 p-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         <Field label="Nombre">
-          <Input
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            className="h-9 text-xs"
-          />
+          <Input value={nombre} onChange={(e) => setNombre(e.target.value)} />
         </Field>
-        <Badge tone={auto ? "info" : "neutral"}>
-          {TIPO_LABEL[meta.tipo] ?? meta.tipo} · {meta.unidad}
-        </Badge>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
         <Field label="Objetivo">
           <Input
             type="number"
             value={valorMeta}
             onChange={(e) => setValorMeta(e.target.value)}
-            className="h-9 text-xs"
           />
         </Field>
-        <Field label={auto ? "Actual (auto)" : "Actual"}>
+        <Field label={meta.tipo !== "manual" ? "Avance (auto)" : "Avance actual"}>
           <Input
             type="number"
             value={valorActual}
             onChange={(e) => setValorActual(e.target.value)}
-            disabled={auto}
-            className="h-9 text-xs"
+            disabled={meta.tipo !== "manual"}
           />
         </Field>
-        {auto ? (
-          <p className="col-span-2 -mt-1 text-[10px] text-slate-400">
-            El valor actual se calcula automáticamente ({formatNumber(meta.valor_actual)}).
-          </p>
-        ) : null}
       </div>
-      <div className="flex items-start gap-2 sm:flex-col">
-        <Button
-          type="button"
-          size="sm"
-          onClick={save}
-          disabled={saving}
-          icon={<Save className="h-3.5 w-3.5" />}
-          className="flex-1 sm:flex-none"
-        >
-          Guardar
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={remove}
-          disabled={deleting}
-          icon={<Trash2 className="h-3.5 w-3.5" />}
-          className="flex-1 sm:flex-none"
-        >
-          Borrar
-        </Button>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Badge tone={meta.tipo !== "manual" ? "info" : "neutral"}>
+            {TIPO_LABEL[meta.tipo] ?? meta.tipo} · {meta.unidad}
+          </Badge>
+          {meta.tipo !== "manual" ? (
+            <span className="text-[11px] text-slate-400">
+              Avance calculado: {formatNumber(meta.valor_actual)}
+            </span>
+          ) : null}
+        </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => void handleSave()}
+            disabled={saving}
+            icon={<Save className="h-3.5 w-3.5" />}
+          >
+            {saving ? "Guardando…" : "Guardar"}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => void handleDelete()}
+            disabled={deleting}
+            icon={<Trash2 className="h-3.5 w-3.5" />}
+          >
+            {deleting ? "Borrando…" : "Borrar"}
+          </Button>
+        </div>
       </div>
     </div>
   );

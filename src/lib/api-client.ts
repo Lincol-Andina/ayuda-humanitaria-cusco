@@ -49,9 +49,7 @@ export async function createDespacho(payload: FormData): Promise<Despacho> {
 
 export async function updateMeta(
   id: string,
-  payload: Partial<Pick<Meta, "nombre" | "valor_meta" | "valor_actual">> & {
-    pin: string;
-  },
+  payload: Partial<Pick<Meta, "nombre" | "valor_meta" | "valor_actual">>,
 ): Promise<Meta> {
   const response = await fetch(`/api/metas/${id}`, {
     method: "PATCH",
@@ -61,9 +59,7 @@ export async function updateMeta(
   return handle<Meta>(response);
 }
 
-export async function createMeta(
-  payload: Partial<Meta> & { pin: string },
-): Promise<Meta> {
+export async function createMeta(payload: Partial<Meta>): Promise<Meta> {
   const response = await fetch("/api/metas", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -72,18 +68,12 @@ export async function createMeta(
   return handle<Meta>(response);
 }
 
-export async function deleteMeta(id: string, pin: string): Promise<void> {
-  const response = await fetch(`/api/metas/${id}?pin=${encodeURIComponent(pin)}`, {
-    method: "DELETE",
-  });
+export async function deleteMeta(id: string): Promise<void> {
+  const response = await fetch(`/api/metas/${id}`, { method: "DELETE" });
   await handle<{ ok: boolean }>(response);
 }
 
-export async function resetData(pin: string): Promise<{ ok: boolean }> {
-  const response = await fetch("/api/reset", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pin }),
-  });
+export async function resetData(): Promise<{ ok: boolean }> {
+  const response = await fetch("/api/reset", { method: "POST" });
   return handle<{ ok: boolean }>(response);
 }

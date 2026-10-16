@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdminDb, nextCode, uploadFoto, errorMessage } from "@/lib/db";
 import { str, num } from "@/lib/api-form";
+import { requireRole } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireRole(request, ["inspeccion", "admin"]);
+    if (auth instanceof NextResponse) return auth;
+
     const form = await request.formData();
 
     const codigo = await nextCode("descarte", "DESC");

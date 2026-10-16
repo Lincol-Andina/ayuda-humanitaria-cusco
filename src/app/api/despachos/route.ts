@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdminDb, nextCode, uploadFoto, errorMessage } from "@/lib/db";
 import { str, parseLoteIds } from "@/lib/api-form";
+import { requireRole } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +31,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireRole(request, ["despacho", "admin"]);
+    if (auth instanceof NextResponse) return auth;
+
     const incoming = await request.formData();
     const loteIds = parseLoteIds(incoming.get("lotes"));
 

@@ -1,24 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdminDb, errorMessage } from "@/lib/db";
+import { requireRole } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function validatePin(pin: unknown): boolean {
-  const expected = process.env.ADMIN_PIN ?? "1234";
-  return typeof pin === "string" && pin.trim() === expected;
-}
 
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
   try {
+    const auth = await requireRole(request, ["admin"]);
+    if (auth instanceof NextResponse) return auth;
+
     const { id } = await context.params;
     const body = (await request.json()) as Record<string, unknown>;
-    if (!validatePin(body.pin)) {
-      return NextResponse.json({ error: "PIN incorrecto" }, { status: 401 });
-    }
 
     const data: Record<string, unknown> = { updated: new Date().toISOString() };
     if (body.nombre !== undefined) data.nombre = String(body.nombre);
@@ -45,11 +41,10 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
+    const auth = await requireRole(request, ["admin"]);
+    if (auth instanceof NextResponse) return auth;
+
     const { id } = await context.params;
-    const pin = new URL(request.url).searchParams.get("pin");
-    if (!validatePin(pin)) {
-      return NextResponse.json({ error: "PIN incorrecto" }, { status: 401 });
-    }
     const db = getAdminDb();
     const { error } = await db.from("metas").delete().eq("id", id);
     if (error) throw error;
