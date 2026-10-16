@@ -186,12 +186,12 @@ Para cerrar, pulsa la X.
 
 ## 6. Ruta `/admin` — Administración (Personal autorizado)
 
-Esta pantalla requiere **autenticación con PIN**. Solo debe usarse por personal responsable del sistema.
+Esta pantalla requiere **iniciar sesión con un usuario de rol administrador**. Solo debe usarse por personal responsable del sistema.
 
-### Paso 1: Ingresar PIN
-1. Al abrir `/admin`, aparece la pantalla **"Acceso restringido"**.
-2. Escribe el **PIN de administración** y pulsa **"Verificar"**.
-3. Si el PIN es correcto, accedes al panel de administración. Si es incorrecto, aparece un mensaje de error.
+### Paso 1: Iniciar sesión
+1. Al abrir `/admin` sin sesión, el sistema redirige a la página de **Inicio de sesión** (`/login`).
+2. Escribe tu **usuario** y **contraseña**, y pulsa **"Ingresar"**.
+3. Si las credenciales son correctas y tu usuario es administrador, accedes al panel. Si no, aparece un mensaje de error.
 
 ### Paso 2: Gestionar Metas
 Una vez dentro, aparece la sección **"Gestión de metas"**. Aquí se configuran las metas que aparecen en la Pantalla de Transparencia (`/`).
@@ -233,16 +233,15 @@ En la sección **"Reiniciar datos"** puedes borrar los registros operativos para
 - **Metas** (se conservan, para no tener que volver a crearlas).
 
 **Cómo hacerlo (con confirmación de seguridad):**
-1. Haz clic en **"Reiniciar datos"**.
-2. Aparece un cuadro de confirmación pidiendo el **PIN de administración** nuevamente.
-3. Escribe el PIN y confirma.
-4. **Qué ocurre:** Se eliminan lotes, descartes, despachos y se reinicia la numeración de códigos (LOTE/DESC/DESPACHO volverán a empezar desde 001). Las metas permanecen intactas.
-5. Aparece un mensaje con el conteo de registros eliminados.
+1. Haz clic en **"Reiniciar datos de prueba"**.
+2. Aparece un cuadro de confirmación en el navegador. Confirma la acción.
+3. **Qué ocurre:** Se eliminan lotes, descartes, despachos y se reinicia la numeración de códigos (LOTE/DESC/DESPACHO volverán a empezar desde 001). Las metas permanecen intactas.
+4. Aparece un mensaje con el conteo de registros eliminados.
 
 > **Uso recomendado:** Usar esta opción solo al iniciar una nueva campaña o para limpiar datos de prueba.
 
-### Cerrar sesión de administración
-Pulsa **"Cerrar sesión"** (arriba a la derecha del panel) para volver a la pantalla de ingreso con PIN.
+### Cerrar sesión
+Pulsa **"Cerrar sesión"** (arriba a la derecha de la barra de navegación) para salir y volver a la pantalla de Inicio de sesión.
 
 ---
 

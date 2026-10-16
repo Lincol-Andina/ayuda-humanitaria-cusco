@@ -113,7 +113,7 @@ En la parte inferior, se muestra el historial con todos los despachos realizados
 
 ## 5. Administración (/admin)
 
-Esta pantalla está destinada únicamente al **personal autorizado** para realizar tareas de mantenimiento. Para ingresar, se solicita un **PIN de administración**.
+Esta pantalla está destinada únicamente al **personal autorizado** para realizar tareas de mantenimiento. Para ingresar, se debe iniciar sesión en `/login` con un **usuario y contraseña** que tenga el rol de administrador.
 
 ### ¿Qué se puede hacer aquí?
 
@@ -136,7 +136,7 @@ Existe la opción **"Reiniciar datos"**. Al utilizarla, se borrarán únicamente
 
 **Las metas NO se eliminan** con esta acción, por lo que el esquema de objetivos se mantiene intacto.
 
-> Esta acción requiere ingresar el PIN de administración para confirmar que es intencional.
+> Esta acción solo está disponible para usuarios con rol de administrador.
 
 ---
 
@@ -147,7 +147,7 @@ Existe la opción **"Reiniciar datos"**. Al utilizarla, se borrarán únicamente
 - **Prioriza la foto:** En inspección y en despacho, la foto es obligatoria. Esto garantiza la trazabilidad de la donación.
 - **Usa los filtros:** En inventario, los filtros por estado y categoría ahorran tiempo al buscar lotes.
 - **Exporta el CSV:** Cada vez que termines un turno, puedes exportar el Log de Descartes para respaldarlo.
-- **El PIN es personal:** No lo compartas con personas ajenas a la administración del sistema. 
+- **Tu contraseña es personal:** No la compartas con personas ajenas a tu rol. Cierra sesión al terminar en equipos compartidos.
 
 ---
 

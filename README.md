@@ -31,7 +31,7 @@ actualizan **la misma información al instante, sin recargar la página**.
 1. Entra a [supabase.com](https://supabase.com) → **New project** (guarda la contraseña de la BD).
 2. Abre **SQL Editor** → pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
    Esto crea las tablas `lotes`, `descartes`, `despachos`, `despacho_lotes`, `metas`,
-   `contadores`, la función atómica `next_code()` y el bucket público `evidencias`.
+   `contadores`, `usuarios`, la función atómica `next_code()` y el bucket público `evidencias`.
 3. En **Project Settings → API** copia el **Project URL** y la **service_role key**.
 
 ### 2.2 Configurar variables de entorno
@@ -41,7 +41,7 @@ Copia `.env.local.example` a `.env.local` y ajusta los valores:
 ```ini
 NEXT_PUBLIC_SUPABASE_URL=https://TU-PROYECTO.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=...      # nunca se expone al navegador
-ADMIN_PIN=1234
+SESSION_SECRET=...                  # firma la cookie de sesión (mín. 16 caracteres)
 ```
 
 > Las variables `POCKETBASE_*` / `PB_ADMIN_*` solo se usan una vez, para el script de
@@ -80,7 +80,8 @@ Tras migrar puedes **borrar la carpeta `pocketbase/`** (ya no es necesaria).
 | `/inspeccion` | 1 y 3 | Registro de entrada + selector de foto (con **compresión automática**), checklist físico obligatorio y dictamen **Aprobar** (genera `LOTE-XXX`) o **Rechazar** (genera `DESC-XXX` con motivo y foto). Exporta el **Log de Descartes a CSV**. |
 | `/inventario` | 2 | Tabla sincronizada de lotes con modal de detalle (checklist + foto) y control de estados `EN ALMACÉN → EN TRÁNSITO → ENTREGADO`. |
 | `/despacho` | 4 | Selección de lotes en almacén, registro de destino/responsable/fecha, generación de folio `DESPACHO-XXX` y foto del **acta firmada**; los lotes pasan a `ENTREGADO` para todos los usuarios. |
-| `/admin` | Admin | Acceso con **PIN**, **limpieza/reset centralizado** de datos de prueba y edición de metas. |
+| `/login` | Público | Inicio de sesión con usuario y contraseña. Crea una cookie de sesión firmada. |
+| `/admin` | Admin | Limpieza/reset centralizado de datos de prueba y edición de metas. Requiere sesión con rol `admin`. |
 
 ---
 
@@ -89,6 +90,13 @@ Tras migrar puedes **borrar la carpeta `pocketbase/`** (ya no es necesaria).
 - **El navegador nunca habla con la base de datos.** Todas las lecturas/escrituras
   pasan por las **API routes de Next.js**, que usan la `service_role` key en el servidor.
 - Las tablas tienen **RLS activado sin políticas públicas**: solo el servidor accede.
+- **Autenticación:** usuario/contraseña validados contra la tabla `usuarios` (hash
+  `scrypt`). La sesión viaja en una cookie `donacion_session` **firmada con HMAC-SHA256**
+  (`SESSION_SECRET`), `HttpOnly`, `SameSite=Lax` y `Secure` en producción (8 h de duración).
+  El middleware (`src/middleware.ts`) protege las rutas `/inspeccion`, `/inventario`,
+  `/despacho`, `/admin` y las APIs de escritura según el rol (`admin`, `inspeccion`,
+  `inventario`, `despacho`). El dashboard `/` es público.
+- Los usuarios se crean con `node scripts/create-user.mjs <usuario> <clave> <rol>`.
 - **Trazabilidad:** cada lote/descarte/despacho recibe un código correlativo generado
   de forma atómica en Postgres (`next_code()`).
 - **Gestión de fotos:** se comprimen en el navegador (~0.8 MB, máx. 1280 px) y se suben
@@ -108,8 +116,9 @@ src/
     inspeccion/page.tsx     # Células 1 y 3
     inventario/page.tsx     # Célula 2
     despacho/page.tsx       # Célula 4
-    admin/page.tsx          # Panel de administración (PIN)
-    api/                    # Route handlers (Supabase + Storage, PIN, reset)
+    admin/page.tsx          # Panel de administración (admin)
+    login/page.tsx          # Inicio de sesión
+    api/                    # Route handlers (Supabase + Storage, auth, reset)
   components/
     layout/ ui/ inspeccion/ inventario/ kpi/
   hooks/
@@ -142,6 +151,7 @@ pocketbase/                 # Solo para migrar; se puede borrar tras la migraci�
 | `npm run typecheck` | Verificación de tipos TypeScript |
 | `npm run db:migrate` | Migra datos/fotos de PocketBase local a Supabase |
 | `npm run pb:serve` | (Solo migración) inicia PocketBase local en `0.0.0.0:8090` |
+| `node scripts/create-user.mjs <usuario> <clave> <rol>` | Crea/actualiza un usuario (`admin`, `inspeccion`, `inventario` o `despacho`) |
 
 ---
 
@@ -150,7 +160,7 @@ pocketbase/                 # Solo para migrar; se puede borrar tras la migraci�
 1. Sube el proyecto a un repositorio de GitHub (`.env.local` no se sube).
 2. En Vercel: **Add New → Project** → importa el repo.
 3. Añade las **Environment Variables**: `NEXT_PUBLIC_SUPABASE_URL`,
-   `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PIN`.
+   `SUPABASE_SERVICE_ROLE_KEY`, `SESSION_SECRET`.
 4. **Deploy** → la app queda en `https://<proyecto>.vercel.app`.
 
 > Gratis: Supabase pausa el proyecto tras ~1 semana sin uso (botón **Restore**, no se
@@ -168,7 +178,7 @@ pocketbase/                 # Solo para migrar; se puede borrar tras la migraci�
   (incluida en `schema.sql`).
 - **El reset no borra las fotos** → comprueba que el bucket `evidencias` existe y es público.
 
-## URL de producci�n
+## URL de producci�n
 
 [ayuda-humanitaria-cusco.vercel.app](https://ayuda-humanitaria-cusco.vercel.app)
 Desplegado en Vercel (Next.js + Supabase).

@@ -30,3 +30,5 @@ yarn-error.log*
 
 # pocketbase (ya no se usa; solo para migrar datos una vez)
 /pocketbase/
+
+.vercel

@@ -36,7 +36,8 @@ export async function POST(request: Request) {
     let res: NextResponse = NextResponse.json({ ok: true, usuario: data.usuario, rol: data.rol, nombre: data.nombre });
     res = await setSessionCookie(res, payload);
     return res;
-  } catch {
+  } catch (error) {
+    console.error("[login] error:", error);
     return NextResponse.json({ error: "Error de autenticación" }, { status: 500 });
   }
 }
